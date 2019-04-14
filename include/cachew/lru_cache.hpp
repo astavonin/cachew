@@ -100,8 +100,8 @@ public:
         return iterator( it->second );
     }
 
-    template <class _PutK, class _PutT>
-    void put( _PutK &&key, _PutT &&value )
+    template <class _PutT>
+    void put( const key_type &key, _PutT &&value )
     {
         auto it = _map.find( key );
         if( it != _map.end() )
@@ -115,9 +115,16 @@ public:
             _list.pop_back();
             _map.erase( to_del );
         }
-        _list.emplace_front( std::forward<key_type>( key ),
-                             std::forward<value_type>( value ) );
-        _map.emplace( std::forward<key_type>( key ), _list.begin() );
+        _list.emplace_front( key, std::forward<value_type>( value ) );
+        try
+        {
+            _map.emplace( key, _list.begin() );
+        }
+        catch( ... )
+        {
+            _list.pop_front();
+            throw;
+        }
     }
 
     size_t capacity() const
