@@ -115,7 +115,7 @@ public:
             _list.pop_back();
             _map.erase( to_del );
         }
-        _list.emplace_front( key, std::forward<value_type>( value ) );
+        _list.emplace_front( key, std::forward<_PutT>( value ) );
         try
         {
             _map.emplace( key, _list.begin() );
@@ -127,12 +127,12 @@ public:
         }
     }
 
-    size_t capacity() const
+    size_t capacity() const noexcept
     {
         return _capacity;
     }
 
-    size_t size() const
+    size_t size() const noexcept
     {
         return _map.size();
     }
