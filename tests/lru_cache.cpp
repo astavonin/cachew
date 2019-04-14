@@ -3,7 +3,7 @@
 #include <iostream>
 #include <set>
 
-#include "cachew/lru_cache.hpp"
+#include <cachew/lru_cache.hpp>
 
 using namespace cachew;
 
@@ -86,7 +86,7 @@ TEST_CASE( "ctors and assignment" )
 
         cache_new = cache;
 
-        CHECK( to_set( cache ) == expected );
+        CHECK( to_set( cache_new ) == expected );
     }
 
     SECTION( "swap" )

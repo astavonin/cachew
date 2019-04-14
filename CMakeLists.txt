@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(cachew)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_library(cachew INTERFACE)
 target_sources(cachew INTERFACE
         ${PROJECT_SOURCE_DIR}/include/cachew.hpp

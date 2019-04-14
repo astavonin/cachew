@@ -25,7 +25,9 @@ target_link_libraries(cachew_tests
         cachew
         )
 
-set_property(
-        TARGET cachew_tests
-        PROPERTY CXX_CLANG_TIDY ${clang_tidy}
-)
+if(NOT WIN32)
+    set_property(
+            TARGET cachew_tests
+            PROPERTY CXX_CLANG_TIDY ${clang_tidy}
+    )
+endif(NOT WIN32)
