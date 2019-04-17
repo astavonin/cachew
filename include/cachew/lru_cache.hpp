@@ -18,46 +18,52 @@ public:
     using kv_pair = std::pair<key_type, value_type>;
 
     template <class _Storage = std::list<kv_pair>>
-    class lru_iterator
+    class lru_const_iterator
     {
     private:
-        using it_type        = lru_iterator<_Storage>;
-        using parent_it_type = typename _Storage::const_iterator;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = value_type;
+        using pointer           = const value_type *;
+        using reference         = const value_type &;
+        using iterator_category = std::forward_iterator_tag;
 
-        parent_it_type _it;
+        using actual_iterator_t = lru_const_iterator<_Storage>;
+        using parent_it_t       = typename _Storage::const_iterator;
+
+        parent_it_t _it;
 
     public:
-        lru_iterator() = default;
+        lru_const_iterator() = default;
 
-        lru_iterator( const it_type &it )
+        lru_const_iterator( const actual_iterator_t &it )
             : _it( it._it )
         {
         }
 
-        explicit lru_iterator( const parent_it_type &it )
+        explicit lru_const_iterator( const parent_it_t &it )
             : _it( it )
         {
         }
 
-        bool operator==( const it_type &it ) const
+        bool operator==( const actual_iterator_t &it ) const
         {
             return it._it == _it;
         }
 
-        bool operator!=( const it_type &it ) const
+        bool operator!=( const actual_iterator_t &it ) const
         {
             return it._it != _it;
         }
 
-        const it_type &operator++()
+        const actual_iterator_t &operator++()
         {
             ++_it;
             return *this;
         }
 
-        const it_type operator++( int )
+        const actual_iterator_t operator++( int )
         {
-            it_type res( *this );
+            actual_iterator_t res( *this );
             ++( *this );
             return res;
         }
@@ -76,7 +82,7 @@ public:
     using lru_list = std::list<std::pair<key_type, value_type>>;
     using lru_map  = std::unordered_map<key_type, typename lru_list::iterator>;
 
-    using iterator = lru_iterator<lru_list>;
+    using iterator = lru_const_iterator<lru_list>;
 
     friend bool operator!=( const lru_cache &lhs, const lru_cache &rhs )
     {
