@@ -19,7 +19,7 @@ public:
 
     using kv_pair = std::pair<key_type, value_type>;
 
-    struct lfu_freq_node
+    struct freq_node
     {
         using values_list = std::list<kv_pair>;
 
@@ -27,29 +27,98 @@ public:
         values_list values;
     };
 
-    using freq_list = std::list<lfu_freq_node>;
+    using freq_list = std::list<freq_node>;
     using node_location_pair =
         std::pair<typename freq_list::iterator,
-                  typename lfu_freq_node::values_list::iterator>;
+                  typename freq_node::values_list::iterator>;
     using lfu_map = std::unordered_map<key_type, node_location_pair>;
+
+    template <class _Storage = lfu_map>
+    class lfu_const_iterator
+    {
+    private:
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = value_type;
+        using pointer           = const value_type *;
+        using reference         = const value_type &;
+        using iterator_category = std::forward_iterator_tag;
+
+        using actual_iterator_t = lfu_const_iterator<_Storage>;
+        using parent_it_t       = typename _Storage::const_iterator;
+
+        parent_it_t _it;
+
+    public:
+        lfu_const_iterator() = default;
+
+        lfu_const_iterator( const actual_iterator_t &it )
+            : _it( it._it )
+        {
+        }
+
+        explicit lfu_const_iterator( const parent_it_t &it )
+            : _it( it )
+        {
+        }
+
+        bool operator==( const actual_iterator_t &it ) const
+        {
+            return it._it == _it;
+        }
+
+        bool operator!=( const actual_iterator_t &it ) const
+        {
+            return it._it != _it;
+        }
+
+        const actual_iterator_t &operator++()
+        {
+            ++_it;
+            return *this;
+        }
+
+        const actual_iterator_t operator++( int )
+        {
+            actual_iterator_t res( *this );
+            ++( *this );
+            return res;
+        }
+
+        const value_type &operator*() const
+        {
+            return ( _it->second.second->second );
+        }
+
+        const value_type *operator->() const
+        {
+            return &( _it->second.second->second );
+        }
+    };
+
+    using iterator = lfu_const_iterator<lfu_map>;
+
+    friend bool operator!=( const lfu_cache &lhs, const lfu_cache &rhs )
+    {
+        return !( rhs == lhs );
+    }
 
     explicit lfu_cache( size_t capacity ) noexcept
         : _capacity( capacity )
     {
     }
 
-    value_type get( const key_type &key )
+    iterator get( const key_type &key )
     {
         auto it = _map.find( key );
         if( it == _map.end() )
         {
-            return value_type{};
+            return iterator{ _map.end() };
         }
         node_location_pair &location = it->second;
 
         promote( location );
 
-        return location.second->second;
+        return iterator( it );
     }
 
     template <class _PutT>
@@ -67,19 +136,15 @@ public:
         {
             if( _map.size() == _capacity && _capacity > 0 )
             {
-                lfu_freq_node &freq_node = *( _list.begin() );
-                auto           to_del    = std::prev( freq_node.values.end() );
-
-                _map.erase( ( *to_del ).first );
-                freq_node.values.erase( to_del );
+                evict();
             }
             auto pos = _list.begin();
             if( pos == _list.end() )
             {
-                _list.emplace_back( lfu_freq_node{1} );
+                _list.emplace_back( freq_node{1} );
                 pos = _list.begin();
             }
-            lfu_freq_node &freq_node = *pos;
+            freq_node &freq_node = *pos;
             freq_node.values.emplace_front(
                 std::make_pair( key, std::forward<_PutT>( value ) ) );
             _map.emplace( key,
@@ -95,6 +160,16 @@ public:
     size_t size() const noexcept
     {
         return _map.size();
+    }
+
+    iterator begin() const noexcept
+    {
+        return iterator( _map.begin() );
+    }
+
+    iterator end() const noexcept
+    {
+        return iterator( _map.end() );
     }
 
     void dump_debug( std::ostream &stream )
@@ -120,14 +195,23 @@ private:
         auto &cur_node = *( location.first );
         if( new_pos == _list.end() )
         {
-            _list.emplace_back( lfu_freq_node{cur_node.frequency + 1} );
+            _list.emplace_back( freq_node{cur_node.frequency + 1} );
             new_pos = std::prev( _list.end() );
         }
-        lfu_freq_node &freq_node = *new_pos;
+        freq_node &freq_node = *new_pos;
         freq_node.values.splice( freq_node.values.begin(),
                                  ( *location.first ).values, location.second );
         // location.second already should be updated
         location.first = new_pos;
+    }
+
+    void evict()
+    {
+        freq_node &freq_node = *( _list.begin() );
+        auto           to_del    = std::prev( freq_node.values.end() );
+
+        _map.erase( ( *to_del ).first );
+        freq_node.values.erase( to_del );
     }
 
     freq_list _list;

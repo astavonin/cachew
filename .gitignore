@@ -36,3 +36,5 @@
 # IDEA
 cmake-build-debug
 .idea
+
+build

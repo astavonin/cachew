@@ -18,7 +18,7 @@ std::set<T> to_set( const lru_cache<T, T> cache )
     return res;
 }
 
-TEST_CASE( "iterator" )
+TEST_CASE( "LRU iterator" )
 {
     lru_cache<int, int> cache( 5 );
 
@@ -38,7 +38,7 @@ TEST_CASE( "iterator" )
     CHECK( to_set( cache ) == expected );
 }
 
-TEST_CASE( "cache size" )
+TEST_CASE( "LRU cache size" )
 {
     lru_cache<int, int> cache( 5 );
 
@@ -62,7 +62,7 @@ TEST_CASE( "cache size" )
     CHECK( to_set( cache ) == std::set<int>{11, 60, 77, 80, 90} );
 }
 
-TEST_CASE( "ctors and assignment" )
+TEST_CASE( "LRU ctors and assignment" )
 {
     lru_cache<int, int> cache( 5 );
 
