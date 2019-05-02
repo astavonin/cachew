@@ -1,3 +1,4 @@
+
 #ifndef CACHEW_LFU_CACHE_HPP
 #define CACHEW_LFU_CACHE_HPP
 
@@ -112,7 +113,7 @@ public:
         auto it = _map.find( key );
         if( it == _map.end() )
         {
-            return iterator{ _map.end() };
+            return iterator{_map.end()};
         }
         node_location_pair &location = it->second;
 
@@ -127,10 +128,14 @@ public:
         auto it = _map.find( key );
         if( it != _map.end() )
         {
-            node_location_pair &location = it->second;
+            node_location_pair &cur_loc = it->second;
 
-            promote( location );
-            location.second->second = std::forward<_PutT>( value );
+            auto new_loc           = promote( cur_loc );
+            new_loc.second->second = std::forward<_PutT>( value );
+
+            // it's safe to update internal state as no exceptions are expected
+            // after this line
+            std::swap( cur_loc, new_loc );
         }
         else
         {
@@ -147,8 +152,18 @@ public:
             freq_node &freq_node = *pos;
             freq_node.values.emplace_front(
                 std::make_pair( key, std::forward<_PutT>( value ) ) );
-            _map.emplace( key,
-                          std::make_pair( pos, freq_node.values.begin() ) );
+            try
+            {
+                _map.emplace( key,
+                              std::make_pair( pos, freq_node.values.begin() ) );
+            }
+            catch( ... )
+            {
+                // already emplaced `values_list` will not be removed as it
+                // doesn't affect cache consistency
+                freq_node.values.pop_front();
+                throw;
+            }
         }
     }
 
@@ -172,24 +187,8 @@ public:
         return iterator( _map.end() );
     }
 
-    void dump_debug( std::ostream &stream )
-    {
-        stream << "[";
-        for( const auto &node : _list )
-        {
-            stream << node.frequency << ": {";
-            for( auto const &val : node.values )
-            {
-                stream << val.first << " ";
-            }
-
-            stream << "}, ";
-        }
-        stream << "]" << std::endl;
-    }
-
 private:
-    void promote( node_location_pair &location )
+    node_location_pair promote( node_location_pair location )
     {
         auto  new_pos  = std::next( location.first );
         auto &cur_node = *( location.first );
@@ -203,12 +202,14 @@ private:
                                  ( *location.first ).values, location.second );
         // location.second already should be updated
         location.first = new_pos;
+
+        return location;
     }
 
     void evict()
     {
         freq_node &freq_node = *( _list.begin() );
-        auto           to_del    = std::prev( freq_node.values.end() );
+        auto       to_del    = std::prev( freq_node.values.end() );
 
         _map.erase( ( *to_del ).first );
         freq_node.values.erase( to_del );
