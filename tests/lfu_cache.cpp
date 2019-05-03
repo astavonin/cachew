@@ -5,18 +5,9 @@
 
 #include <cachew/lfu_cache.hpp>
 
-using namespace cachew;
+#include "common.hpp"
 
-template <class T>
-std::set<T> to_set( const lfu_cache<T, T> cache )
-{
-    std::set<int> res;
-    for( auto val : cache )
-    {
-        res.emplace( val );
-    }
-    return res;
-}
+using namespace cachew;
 
 TEST_CASE( "LFU cache size" )
 {
@@ -62,27 +53,35 @@ TEST_CASE( "LFU iterator" )
     CHECK( to_set( cache ) == expected );
 }
 
-TEST_CASE( "LFU ctors and assignment" )
+TEMPLATE_TEST_CASE( "LFU ctors and assignment", "", int, double, std::string )
 {
-    lfu_cache<int, int> cache( 5 );
+    const size_t data_len  = 1000;
+    const size_t cache_len = data_len / 2;
 
-    std::set<int> expected = {50, 60, 70, 80, 90};
+    std::vector<TestType> buff;
+    gen_test_seq( data_len, buff );
 
-    for( int i = 0; i < 10; i++ )
+    lfu_cache<int, TestType> cache( cache_len );
+
+    auto m = buff.begin();
+    std::advance( m, cache_len );
+    std::set<TestType> expected( m, buff.end() );
+
+    for( int i = 0; i < data_len; i++ )
     {
-        cache.put( i, i * 10 );
+        cache.put( i, buff[i] );
     }
 
     SECTION( "ctors" )
     {
-        lfu_cache<int, int> cache_new( cache );
+        lfu_cache<int, TestType> cache_new( cache );
 
-        CHECK( to_set( cache ) == expected );
+        CHECK( to_set( cache_new ) == expected );
     }
 
     SECTION( "assignment" )
     {
-        lfu_cache<int, int> cache_new( 5 );
+        lfu_cache<int, TestType> cache_new( cache_len );
 
         cache_new = cache;
 
@@ -91,12 +90,12 @@ TEST_CASE( "LFU ctors and assignment" )
 
     SECTION( "swap" )
     {
-        lfu_cache<int, int> cache_new( 5 );
+        lfu_cache<int, TestType> cache_new( cache_len );
 
         std::swap( cache_new, cache );
 
         CHECK( cache.size() == 0 );
-        CHECK( cache_new.size() == 5 );
+        CHECK( cache_new.size() == cache_len );
         CHECK( to_set( cache_new ) == expected );
     }
 }

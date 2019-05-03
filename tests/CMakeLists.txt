@@ -19,7 +19,8 @@ message("\n#####################################################\n")
 add_executable(cachew_tests
         entry_point.cpp
         lru_cache.cpp
-        lfu_cache.cpp)
+        lfu_cache.cpp
+        common.cpp)
 
 target_link_libraries(cachew_tests
         cachew
