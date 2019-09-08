@@ -54,7 +54,7 @@ TEST_CASE( "LRU cache size" )
 }
 
 
-TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float, std::string )
+TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float, std::string )   // NOLINT
 {
     const size_t data_len  = 1000;
     const size_t cache_len = data_len / 2;
@@ -68,14 +68,14 @@ TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float, std::string )
     std::advance( m, cache_len );
     std::set<TestType> expected( m, buff.end() );
 
-    for( int i = 0; i < buff.size(); i++ )
+    for( size_t i = 0; i < buff.size(); i++ )
     {
         cache.put( i, buff[i] );
     }
 
     SECTION( "ctors" )
     {
-        lru_cache<int, TestType> cache_new( cache );
+        lru_cache<int, TestType> cache_new( cache );    // NOLINT
 
         CHECK( to_set( cache_new ) == expected );
     }

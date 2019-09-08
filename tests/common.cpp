@@ -14,7 +14,7 @@ void gen_test_seq( size_t len, std::vector<std::string> &res )
 
     res.resize( len );
 
-    for( int i = 0; i < len; ++i )
+    for( size_t i = 0; i < len; ++i )
     {
         std::string buf( 10, '\0' );
         for( int j = 0; j < 10; ++j )
