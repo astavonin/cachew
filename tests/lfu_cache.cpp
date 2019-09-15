@@ -53,7 +53,8 @@ TEST_CASE( "LFU iterator" )
     CHECK( to_set( cache ) == expected );
 }
 
-TEMPLATE_TEST_CASE( "LFU ctors and assignment", "", int, double, std::string )
+TEMPLATE_TEST_CASE( "LFU ctors and assignment", "", int, double,
+                    std::string ) // NOLINT
 {
     const size_t data_len  = 1000;
     const size_t cache_len = data_len / 2;
@@ -74,7 +75,7 @@ TEMPLATE_TEST_CASE( "LFU ctors and assignment", "", int, double, std::string )
 
     SECTION( "ctors" )
     {
-        lfu_cache<int, TestType> cache_new( cache );
+        lfu_cache<int, TestType> cache_new( cache ); // NOLINT
 
         CHECK( to_set( cache_new ) == expected );
     }

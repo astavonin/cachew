@@ -1,6 +1,8 @@
 #ifndef CACHEW_LRU_CACHE_HPP
 #define CACHEW_LRU_CACHE_HPP
 
+#include "cache_iterator.hpp"
+
 #include <algorithm>
 #include <list>
 #include <unordered_map>
@@ -17,72 +19,30 @@ public:
 
     using kv_pair = std::pair<key_type, value_type>;
 
-    template <class _Storage = std::list<kv_pair>>
-    class lru_const_iterator
-    {
-    private:
-        using difference_type   = std::ptrdiff_t;
-        using value_type        = value_type;
-        using pointer           = const value_type *;
-        using reference         = const value_type &;
-        using iterator_category = std::forward_iterator_tag;
-
-        using actual_iterator_t = lru_const_iterator<_Storage>;
-        using parent_it_t       = typename _Storage::const_iterator;
-
-        parent_it_t _it;
-
-    public:
-        lru_const_iterator() = default;
-
-        lru_const_iterator( const actual_iterator_t &it )
-            : _it( it._it )
-        {
-        }
-
-        explicit lru_const_iterator( const parent_it_t &it )
-            : _it( it )
-        {
-        }
-
-        bool operator==( const actual_iterator_t &it ) const
-        {
-            return it._it == _it;
-        }
-
-        bool operator!=( const actual_iterator_t &it ) const
-        {
-            return it._it != _it;
-        }
-
-        const actual_iterator_t &operator++()
-        {
-            ++_it;
-            return *this;
-        }
-
-        const actual_iterator_t operator++( int )
-        {
-            actual_iterator_t res( *this );
-            ++( *this );
-            return res;
-        }
-
-        const value_type &operator*() const
-        {
-            return ( _it->second );
-        }
-
-        const value_type *operator->() const
-        {
-            return &( _it->second );
-        }
-    };
-
     using lru_list = std::list<std::pair<key_type, value_type>>;
     using lru_map  = std::unordered_map<key_type, typename lru_list::iterator>;
 
-    using iterator = lru_const_iterator<lru_list>;
+private:
+    struct accessor
+    {
+        inline explicit accessor( const typename lru_list::const_iterator &it )
+            : _it( it )
+        {
+        }
+        inline const value_type &ref() const
+        {
+            return _it->second;
+        }
+        inline const value_type *ptr() const
+        {
+            return &( _it->second );
+        }
+
+        const typename lru_list::const_iterator &_it;
+    };
+
+public:
+    using iterator = cache_const_iterator<accessor, lru_list, value_type>;
 
     friend bool operator!=( const lru_cache &lhs, const lru_cache &rhs )
     {

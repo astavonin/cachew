@@ -6,7 +6,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(cachew INTERFACE)
 target_sources(cachew INTERFACE
         ${PROJECT_SOURCE_DIR}/include/cachew.hpp
+        ${PROJECT_SOURCE_DIR}/include/cachew/cache_iterator.hpp
         ${PROJECT_SOURCE_DIR}/include/cachew/lru_cache.hpp
+        ${PROJECT_SOURCE_DIR}/include/cachew/lfu_cache.hpp
+        ${PROJECT_SOURCE_DIR}/include/cachew/concurrent_cache.hpp
         )
 
 target_include_directories(cachew INTERFACE

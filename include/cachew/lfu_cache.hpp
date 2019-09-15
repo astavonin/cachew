@@ -1,8 +1,9 @@
-
 #ifndef CACHEW_LFU_CACHE_HPP
 #define CACHEW_LFU_CACHE_HPP
 
 // http://dhruvbird.com/lfu.pdf
+
+#include "cache_iterator.hpp"
 
 #include <algorithm>
 #include <list>
@@ -34,69 +35,27 @@ public:
                   typename freq_node::values_list::iterator>;
     using lfu_map = std::unordered_map<key_type, node_location_pair>;
 
-    template <class _Storage = lfu_map>
-    class lfu_const_iterator
+private:
+    struct accessor
     {
-    private:
-        using difference_type   = std::ptrdiff_t;
-        using value_type        = value_type;
-        using pointer           = const value_type *;
-        using reference         = const value_type &;
-        using iterator_category = std::forward_iterator_tag;
-
-        using actual_iterator_t = lfu_const_iterator<_Storage>;
-        using parent_it_t       = typename _Storage::const_iterator;
-
-        parent_it_t _it;
-
-    public:
-        lfu_const_iterator() = default;
-
-        lfu_const_iterator( const actual_iterator_t &it )
-            : _it( it._it )
-        {
-        }
-
-        explicit lfu_const_iterator( const parent_it_t &it )
+        inline explicit accessor( const typename lfu_map ::const_iterator &it )
             : _it( it )
         {
         }
-
-        bool operator==( const actual_iterator_t &it ) const
-        {
-            return it._it == _it;
-        }
-
-        bool operator!=( const actual_iterator_t &it ) const
-        {
-            return it._it != _it;
-        }
-
-        const actual_iterator_t &operator++()
-        {
-            ++_it;
-            return *this;
-        }
-
-        const actual_iterator_t operator++( int )
-        {
-            actual_iterator_t res( *this );
-            ++( *this );
-            return res;
-        }
-
-        const value_type &operator*() const
+        inline const value_type &ref() const
         {
             return ( _it->second.second->second );
         }
-
-        const value_type *operator->() const
+        inline const value_type *ptr() const
         {
             return &( _it->second.second->second );
         }
+
+        const typename lfu_map::const_iterator &_it;
     };
 
-    using iterator = lfu_const_iterator<lfu_map>;
+public:
+    using iterator = cache_const_iterator<accessor, lfu_map, value_type>;
 
     friend bool operator!=( const lfu_cache &lhs, const lfu_cache &rhs )
     {
