@@ -38,6 +38,8 @@ public:
 private:
     struct accessor
     {
+        using const_iterator = typename lfu_map::const_iterator;
+
         inline explicit accessor( const typename lfu_map ::const_iterator &it )
             : _it( it )
         {
@@ -55,7 +57,7 @@ private:
     };
 
 public:
-    using iterator = cache_const_iterator<accessor, lfu_map, value_type>;
+    using iterator = cache_const_iterator<accessor, value_type>;
 
     friend bool operator!=( const lfu_cache &lhs, const lfu_cache &rhs )
     {

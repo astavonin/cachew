@@ -25,7 +25,9 @@ public:
 private:
     struct accessor
     {
-        inline explicit accessor( const typename lru_list::const_iterator &it )
+        using const_iterator = typename lru_list::const_iterator;
+
+        inline explicit accessor( const const_iterator &it )
             : _it( it )
         {
         }
@@ -38,11 +40,11 @@ private:
             return &( _it->second );
         }
 
-        const typename lru_list::const_iterator &_it;
+        const const_iterator &_it;
     };
 
 public:
-    using iterator = cache_const_iterator<accessor, lru_list, value_type>;
+    using iterator = cache_const_iterator<accessor, value_type>;
 
     friend bool operator!=( const lru_cache &lhs, const lru_cache &rhs )
     {

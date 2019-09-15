@@ -3,18 +3,17 @@
 
 namespace cachew
 {
-template <typename accessor_t, typename _Storage, typename value_type>
+template <typename _Accessor, typename _ValueType>
 class cache_const_iterator
 {
 private:
     using difference_type   = std::ptrdiff_t;
-    using pointer           = const value_type *;
-    using reference         = const value_type &;
+    using pointer           = const _ValueType *;
+    using reference         = const _ValueType &;
     using iterator_category = std::forward_iterator_tag;
 
-    using actual_iterator_t =
-        cache_const_iterator<accessor_t, _Storage, value_type>;
-    using parent_it_t = typename _Storage::const_iterator;
+    using actual_iterator_t = cache_const_iterator<_Accessor, _ValueType>;
+    using parent_it_t       = typename _Accessor::const_iterator;
 
     parent_it_t _it;
 
@@ -54,14 +53,14 @@ public:
         return res;
     }
 
-    const value_type &operator*() const
+    const _ValueType &operator*() const
     {
-        return accessor_t( _it ).ref();
+        return _Accessor( _it ).ref();
     }
 
-    const value_type *operator->() const
+    const _ValueType *operator->() const
     {
-        return accessor_t( _it ).ptr();
+        return _Accessor( _it ).ptr();
     }
 };
 } // namespace cachew
