@@ -68,7 +68,7 @@ TEMPLATE_TEST_CASE( "LFU ctors and assignment", "", int, double,
     std::advance( m, cache_len );
     std::set<TestType> expected( m, buff.end() );
 
-    for( int i = 0; i < data_len; i++ )
+    for( size_t i = 0; i < data_len; i++ )
     {
         cache.put( i, buff[i] );
     }
