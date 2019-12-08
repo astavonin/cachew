@@ -43,7 +43,6 @@ TEST_CASE( "LRU cache size" )
 
     CHECK( cache.size() == 5 );
 
-
     std::set<int> expected = {50, 60, 70, 80, 90};
     CHECK( to_set( cache ) == expected );
 
@@ -53,8 +52,8 @@ TEST_CASE( "LRU cache size" )
     CHECK( to_set( cache ) == std::set<int>{11, 60, 77, 80, 90} );
 }
 
-
-TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float, std::string )   // NOLINT
+TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float,
+                    std::string ) // NOLINT
 {
     const size_t data_len  = 1000;
     const size_t cache_len = data_len / 2;
@@ -75,7 +74,7 @@ TEMPLATE_TEST_CASE( "LRU ctors and assignment", "", int, float, std::string )   
 
     SECTION( "ctors" )
     {
-        lru_cache<int, TestType> cache_new( cache );    // NOLINT
+        lru_cache<int, TestType> cache_new( cache ); // NOLINT
 
         CHECK( to_set( cache_new ) == expected );
     }
