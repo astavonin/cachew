@@ -27,13 +27,13 @@ add_executable(cachew_perf
     lru_perf.cpp
     common.cpp)
 
-if(NOT WIN32)
+if(clang_tidy)
     set_target_properties(
         cachew_tests
         cachew_perf
         PROPERTIES CXX_CLANG_TIDY ${clang_tidy}
         )
-endif(NOT WIN32)
+endif(clang_tidy)
 
 target_compile_definitions(cachew_perf PUBLIC CATCH_CONFIG_ENABLE_BENCHMARKING)
 
