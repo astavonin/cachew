@@ -5,6 +5,7 @@ BUILD_DIR ?= build
 ROOT_DIR := $(CURDIR)
 
 debug: BUILD_TYPE=Debug
+debug: -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 debug: ./$(BUILD_DIR)/Makefile
 	@ $(MAKE) -C $(BUILD_DIR) -j8
 

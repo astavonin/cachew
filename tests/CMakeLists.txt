@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(cachew_tests)
 
-find_program( clang_tidy NAMES clang-tidy PATHS /usr/local/opt/llvm/bin/)
+find_program(clang_tidy NAMES clang-tidy PATHS /usr/local/opt/llvm/bin/)
 
 message("\n#####################################################\n")
 message("CMAKE_BUILD_TYPE:\t${CMAKE_BUILD_TYPE}")
@@ -17,44 +17,45 @@ message("CLANG-TIDY:\t\t${clang_tidy}")
 message("\n#####################################################\n")
 
 add_executable(cachew_tests
-    entry_point.cpp
-    lru_cache.cpp
-    lfu_cache.cpp
-    common.cpp)
+        entry_point.cpp
+        lru_cache.cpp
+        lfu_cache.cpp
+        common.cpp
+        concurrent_cache.cpp)
 
 add_executable(cachew_perf
-    entry_point.cpp
-    lru_perf.cpp
-    common.cpp)
+        entry_point.cpp
+        lru_perf.cpp
+        common.cpp)
 
-if(clang_tidy)
+if (clang_tidy)
     set_target_properties(
-        cachew_tests
-        cachew_perf
-        PROPERTIES CXX_CLANG_TIDY ${clang_tidy}
-        )
-endif(clang_tidy)
+            cachew_tests
+            cachew_perf
+            PROPERTIES CXX_CLANG_TIDY ${clang_tidy}
+    )
+endif (clang_tidy)
 
 target_compile_definitions(cachew_perf PUBLIC CATCH_CONFIG_ENABLE_BENCHMARKING)
 
 target_compile_options(cachew_tests PRIVATE
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>"
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>"
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-pedantic-errors>"
-    "$<$<CXX_COMPILER_ID:MSVC>:/W3>"
-    )
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>"
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>"
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-pedantic-errors>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/W3>"
+        )
 
 target_compile_options(cachew_perf PRIVATE
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>"
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>"
-    "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-pedantic-errors>"
-    "$<$<CXX_COMPILER_ID:MSVC>:/W3>"
-    )
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>"
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>"
+        "$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-pedantic-errors>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/W3>"
+        )
 
 target_link_libraries(cachew_tests
-    cachew
-    )
+        cachew
+        )
 
 target_link_libraries(cachew_perf
-    cachew
-    )
+        cachew
+        )

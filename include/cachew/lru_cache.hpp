@@ -19,7 +19,7 @@ public:
 
     using kv_pair = std::pair<key_type, value_type>;
 
-    using lru_list = std::list<std::pair<key_type, value_type>>;
+    using lru_list = std::list<kv_pair>;
     using lru_map  = std::unordered_map<key_type, typename lru_list::iterator>;
 
 private:

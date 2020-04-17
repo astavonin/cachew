@@ -17,8 +17,6 @@ target_include_directories(cachew INTERFACE
         $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 
-if (NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-endif()
+set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(tests)

@@ -1,6 +1,8 @@
 #ifndef CACHEW_CACHE_ITERATOR_HPP
 #define CACHEW_CACHE_ITERATOR_HPP
 
+#include <iterator>
+
 namespace cachew
 {
 template <typename _Accessor, typename _ValueType>
