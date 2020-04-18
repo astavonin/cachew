@@ -87,12 +87,12 @@ template <class key_type>
 typename list<key_type>::node *const
     list<key_type>::node::OUT_OF_LIST_NODE = (node *)-1;
 
-template <class _Key, class _Tp>
+template <class Key, class Tp>
 class concurrent_cache
 {
 public:
-    using key_type   = _Key;
-    using value_type = _Tp;
+    using key_type   = Key;
+    using value_type = Tp;
 
     using kv_pair = std::pair<key_type, value_type>;
 
@@ -183,6 +183,7 @@ public:
     explicit concurrent_cache( size_t capacity )
         : _capacity( capacity )
         , _buckets_count( std::thread::hardware_concurrency() )
+        , _size( 0 )
     {
         _buckets.reserve( _buckets_count );
         for( size_t i = 0; i < _buckets_count; ++i )
