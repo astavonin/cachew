@@ -18,6 +18,8 @@ class list
 public:
     struct node
     {
+        static node *const OUT_OF_LIST_NODE;
+
         node()
             : _prev( OUT_OF_LIST_NODE )
             , _next( nullptr )
@@ -31,14 +33,14 @@ public:
         {
         }
 
-        key_type _key;
-        node *   _prev;
-        node *   _next;
-
-        bool is_valid() const
+        [[nodiscard]] inline bool is_valid() const
         {
             return _prev != OUT_OF_LIST_NODE;
         }
+
+        key_type _key;
+        node *   _prev;
+        node *   _next;
     };
 
     inline void unlink( node *n )
@@ -48,11 +50,14 @@ public:
         node *prev  = n->_prev;
         node *next  = n->_next;
         prev->_next = next;
-        next->_prev = prev;
-        n->_prev    = OUT_OF_LIST_NODE;
+        if( next )
+        {
+            next->_prev = prev;
+        }
+        n->_prev = node::OUT_OF_LIST_NODE;
     }
 
-    void move_front( node *n )
+    inline void move_front( node *n )
     {
         assert( _head != n );
 
@@ -62,12 +67,25 @@ public:
         _head        = n;
     }
 
-    static node *const OUT_OF_LIST_NODE;
+    inline node *pop_back()
+    {
+        node *to_remove = _tail;
+        unlink( _tail );
+        return to_remove;
+    }
 
-    node *     _head;
-    node *     _tail;
-    std::mutex _list_mutex;
+    inline node *back()
+    {
+        return _tail;
+    }
+
+    node *_head;
+    node *_tail;
 };
+
+template <class key_type>
+typename list<key_type>::node *const
+    list<key_type>::node::OUT_OF_LIST_NODE = (node *)-1;
 
 template <class _Key, class _Tp>
 class concurrent_cache
@@ -87,11 +105,16 @@ public:
 private:
     class bucket
     {
-        using storage = std::unordered_map<key_type, node_ptr>;
+        using storage = std::unordered_map<key_type, vi_pair>;
 
     public:
-        bucket()  = default;
-        ~bucket() = default;
+        bucket()
+        {
+        }
+
+        ~bucket()
+        {
+        }
 
         bool find( const key_type &key )
         {
@@ -146,9 +169,8 @@ private:
         }
 
     private:
-        storage                      _map;
-        std::shared_mutex            _bucket_mutex;
-        typename conc_list::iterator _no_key;
+        storage           _map;
+        std::shared_mutex _bucket_mutex;
     };
 
 public:
@@ -163,40 +185,69 @@ public:
         , _buckets_count( std::thread::hardware_concurrency() )
     {
         _buckets.reserve( _buckets_count );
-        for( int i = 0; i < _buckets_count; ++i )
+        for( size_t i = 0; i < _buckets_count; ++i )
         {
-            _buckets.emplace_back( bucket( _list.end() ) );
+            _buckets.emplace_back( new bucket() );
         }
     }
 
     std::optional<value_type> get( const key_type &key )
     {
-        size_t  bucket_nr = hash_fn()( key ) % ( _buckets_count - 1 );
-        bucket &bucket    = _buckets[bucket_nr];
+        bucket *bucket = find_bucket( key );
 
-        auto res = bucket.get( key );
+        auto res = bucket->get( key );
 
         if( res )
         {
-            if( _list_mutex.try_lock() )
+            if( _list_mutex.try_lock() && ( *res ).second->is_valid() )
             {
-                _list.splice( _list.begin(), _list, ( *res ).second );
+                _list.move_front( ( *res ).second );
             }
         }
 
-        return !res ? std::nullopt : ( *res ).first;
+        return !res ? std::nullopt
+                    : std::optional<key_type>( std::in_place, ( *res ).first );
+    }
+
+    inline bucket *find_bucket( const key_type &key )
+    {
+        size_t bucket_nr = hash_fn()( key ) % ( _buckets_count - 1 );
+        return _buckets[bucket_nr];
+    }
+
+    void evict()
+    {
+        std::unique_lock ll( _list_mutex );
+        auto             to_evict = _list.pop_back();
+        ll.unlock();
+
+        if( to_evict )
+        {
+            key_type key    = to_evict->_key;
+            bucket * bucket = find_bucket( key );
+            bucket->remove( key );
+        }
     }
 
     template <class _PutT>
     void put( const key_type &key, _PutT &&value )
     {
-        size_t  bucket_nr = hash_fn()( key ) % ( _buckets_count - 1 );
-        bucket &bucket    = _buckets[bucket_nr];
+        bucket *bucket = find_bucket( key );
 
-        typename conc_list::node *node =
-            new typename list<key_type>::node{ key };
-        auto old_node =
-            bucket.put( key, std::make_pair( std::forward( value ), node ) );
+        node_ptr new_node = new typename list<key_type>::node{ key };
+        node_ptr old_node =
+            bucket->put( key, std::make_pair( value, new_node ) );
+        // key, std::make_pair( std::forward( value ), new_node ) );
+
+        size_t cur_size     = _size.load();
+        bool   size_changed = true;
+        if( cur_size >= _capacity &&
+            old_node == nullptr ) // if old_node == nullptr this is insertation,
+                                  // and storage size will growth.
+        {
+            evict();
+            size_changed = false;
+        }
 
         {
             std::unique_lock ll( _list_mutex );
@@ -208,8 +259,11 @@ public:
                 delete old_node;
             }
 
-            _list.move_front( node );
-            // TODO: eviction
+            _list.move_front( new_node );
+        }
+        if( size_changed )
+        {
+            _size++;
         }
     }
 
@@ -224,14 +278,13 @@ public:
     }
 
 private:
-    conc_list           _list;
-    std::shared_mutex   _list_mutex;
-    size_t              _capacity;
-    size_t              _buckets_count;
-    std::vector<bucket> _buckets;
-    std::atomic<size_t> _size;
+    conc_list             _list;
+    std::shared_mutex     _list_mutex;
+    size_t                _capacity;
+    size_t                _buckets_count;
+    std::vector<bucket *> _buckets;
+    std::atomic<size_t>   _size;
 };
-
 } // namespace cachew
 
 #endif // CACHEW_CONCURRENT_CACHE_HPP
