@@ -108,13 +108,8 @@ private:
         using storage = std::unordered_map<key_type, vi_pair>;
 
     public:
-        bucket()
-        {
-        }
-
-        ~bucket()
-        {
-        }
+        bucket()  = default;
+        ~bucket() = default;
 
         bool find( const key_type &key )
         {
@@ -147,7 +142,7 @@ private:
             {
                 l.unlock();
                 l.lock();
-                auto it = _map.find( key );
+                it = _map.find( key );
 
                 if( it == _map.end() )
                 {
@@ -230,8 +225,8 @@ public:
         }
     }
 
-    template <class _PutT>
-    void put( const key_type &key, _PutT &&value )
+    template <class PutT>
+    void put( const key_type &key, PutT &&value )
     {
         bucket *bucket = find_bucket( key );
 
@@ -268,12 +263,12 @@ public:
         }
     }
 
-    size_t capacity() const noexcept
+    [[nodiscard]] size_t capacity() const noexcept
     {
         return _capacity;
     }
 
-    size_t size() const noexcept
+    [[nodiscard]] size_t size() const noexcept
     {
         return _size.load();
     }
